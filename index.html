@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html>
+<head>
+	
+	<title>Final Project Web Cartography</title>
+
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	
+	<link rel="shortcut icon" type="image/x-icon" href="docs/images/favicon.ico" />
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A==" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js" integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA==" crossorigin=""></script>
+	
+	<!-- Include Leaflet CSS and JS -->
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.css" />
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.js"></script>
+	<link href="https://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.css" rel='stylesheet' />
+	<script src="https://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.js"></script>
+	<script src="https://unpkg.com/@maplibre/maplibre-gl-leaflet@0.0.17/leaflet-maplibre-gl.js"></script>
+
+	<!-- Bootstrap CSS-->
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" />
+	
+	  <!-- Marker Cluster CSS -->
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.1/MarkerCluster.css" />
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.1/MarkerCluster.Default.css" />
+    
+	<!-- Geocoder CSS and JS -->
+	<link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+    <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+
+	<!-- Routing Machine CSS and JS -->
+	<link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
+    <script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
+
+
+	<style>
+	#map {position: absolute; top: 0; right: 0; bottom: 0; left: 0;}
+	#Home {
+	   position: absolute;
+	   top: 90px; /* Define the top position */
+	   left: 10px; /* Define the left position */
+	   z-index: 1000; /* Set the z-index to make sure it's on top of the map */
+	   width: 32px;
+	   height: 32px;
+	   background-image: url('img/home-button.png');
+	   background-size: contain;
+	   background-repeat: no-repeat;
+	 }
+   </style>
+
+	
+</head>
+<body>
+
+<!-- Bootstrap Modal -->
+<div class="modal fade" id="welcomeModal" tabindex="-1" role="dialog" aria-labelledby="welcomeModalLabel" aria-hidden="true">
+	<div class="modal-dialog" role="document">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title" id="welcomeModalLabel">Welcome to KOlomouc</h5>
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+					<span aria-hidden="true">&times;</span>
+				</button>
+			</div>
+			<div class="modal-body">
+				<p>Experience biking in Olomouc using our interactive map! Click on the different layers to view bike paths, bike stations, and more. You can also search for specific locations and plan out your next biking adventure. </p>
+				<p> © Andela, Kiarash, Lydia, Sofía, Sushmita</p>
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+			</div>
+		</div>
+	</div>
+</div>
+
+
+
+<div id="map" style="width: 100%; height: 600px;">
+
+	<!-- Bootstrap scripts -->
+	<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"></script>
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+	
+
+<!-- MapTiler Attribution logo -->
+<a href="https://www.maptiler.com" style="position:absolute;left:10px;bottom:35px;z-index:999;"><img src="https://api.maptiler.com/resources/logo.svg" alt="MapTiler logo"></a>
+</div>
+
+
+<!-- Home button -->
+<button id="Home" onclick="goHome()"></button>
+
+
+
+<!-- Marker Cluster JavaScript -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.1/leaflet.markercluster.js"></script>
+
+
+<script>
+
+
+// Add basemap tiles to the map
+const key = 'dET1oDdg6tH4mffSyxtn';
+var gl = L.maplibreGL({
+        attribution: "\u003ca href=\"https://www.maptiler.com/copyright/\" target=\"_blank\"\u003e\u0026copy; MapTiler\u003c/a\u003e \u003ca href=\"https://www.openstreetmap.org/copyright\" target=\"_blank\"\u003e\u0026copy; OpenStreetMap contributors\u003c/a\u003e",
+        style: `https://api.maptiler.com/maps/57431fb6-678f-4872-8bde-c0cfed3d7db7/style.json?key=${key}`
+      });
+
+
+var Esri_WorldStreetMap = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
+	attribution: 'Tiles &copy; Esri &mdash; Source: Esri, DeLorme, NAVTEQ, USGS, Intermap, iPC, NRCAN, Esri Japan, METI, Esri China (Hong Kong), Esri (Thailand), TomTom, 2012'
+});
+
+	
+
+	var OpenStreetMap = L.tileLayer('https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png', {
+	maxZoom: 20,
+	attribution: '&copy; OpenStreetMap | &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+	});
+
+	var CartoDB_DarkMatter = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+	attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+	subdomains: 'abcd',
+	maxZoom: 20
+});
+
+
+
+//Adding thematic layers
+
+//Loading Strava heatmap
+	var strava = L.tileLayer('https://strava-heatmap.tiles.freemap.sk/ride/hot/{z}/{x}/{y}.png?px=256&access_token=2467a2b5294be85ecfdc8ba0d9e38bf554517915', { maxZoom: 19, attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">STRAVA Freemap.sk</a>'});
+
+
+// Create marker cluster group
+    var markers = L.markerClusterGroup();
+
+// Load GeoJSON file containing bike stations published in Maptiler using AJAX
+fetch('https://api.maptiler.com/data/e9005d7e-586a-4624-939c-54ce5cc90e30/features.json?key=dET1oDdg6tH4mffSyxtn') // replace with location of geojson file
+  .then(response => response.json())
+  .then(data => {
+    data.features.forEach(feature  => { 
+      // Create a GeoJSON layer and add it to the marker cluster group
+      var marker = L.geoJSON(feature, {
+        pointToLayer: function(feature, latlng) {
+          // Define the style for each point feature
+          return L.circleMarker(latlng, {
+            radius: 4,
+            fillColor: '#063970',
+            color: 'black',
+            weight: 1,
+            opacity: 1,
+            fillOpacity: 0.8
+          });
+        },
+        maxZoom: 18
+      });
+      markers.addLayer(marker);
+    });
+  })
+  .catch(error => {
+    console.error('Failed to load GeoJSON file', error);
+  }); 
+
+//Adding bike lanes from OpenStreetMap layer to the map 
+	var lines = L.geoJSON();
+
+	  fetch('https://api.maptiler.com/data/52cc364c-9f1d-4fc8-8662-7107d2cff6fe/features.json?key=dET1oDdg6tH4mffSyxtn')
+      .then(response => response.json())
+      .then(data => {
+        
+        var osmbikelanes = L.geoJSON(data, {
+			style: function(feature) {
+        
+            return {color: 'black'    
+            };
+          }
+        });
+		lines.addLayer(osmbikelanes);
+      });
+
+	
+	//Initializing the map
+	var map = L.map('map', {maxZoom: 18, minZoom: 10,
+		center: [49.6,17.25],
+		zoom: 12,
+		layers: [gl, markers]
+	});
+
+
+//Adding basemaps to the layer control icon
+	var baseLayers = {
+		"MapTiler": gl,
+		"Carto Dark":CartoDB_DarkMatter,
+		"OpenStreetMap": OpenStreetMap,
+		"Esri": Esri_WorldStreetMap
+		
+	};
+
+//Adding thematic layers to the layer control icon
+	var overlays = {
+		"Strava Heatmap": strava,
+		"Nextbike Stations": markers,
+		"Bike Lanes OSM": lines
+	};
+
+	//Add layers to control and control to map
+	L.control.layers(baseLayers, overlays).addTo(map);
+	
+	
+	// Define the initial map view
+    var initialView = {
+      center: [49.6,17.25],
+      zoom: 12
+    };
+
+    // Function to reset the map view to the initial state
+    function goHome() {
+      map.setView(initialView.center, initialView.zoom);
+    } 
+
+	// Add a scale control to the map
+	L.control.scale().addTo(map);
+
+	L.Routing.control({zoom:12,
+    waypoints: [
+        //L.latLng(49.620497, 17.249994),
+        //L.latLng(49.564192, 17.252797)
+    ],
+    routeWhileDragging: true,
+    geocoder: L.Control.Geocoder.nominatim()
+	}).addTo(map);
+	
+	// Show Welcome Modal
+		$('#welcomeModal').modal('show');
+
+
+</script>
+
+
+
+</body>
+</html>
